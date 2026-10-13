@@ -1,0 +1,39 @@
+﻿services:
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://krishi:${POSTGRES_PASSWORD:-KrishiLocal_ChangeMe_2026}@db:5432/krishi_shield
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: krishi_shield
+      POSTGRES_USER: krishi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-KrishiLocal_ChangeMe_2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U krishi -d krishi_shield"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
